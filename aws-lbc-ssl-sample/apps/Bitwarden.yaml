@@ -1,0 +1,48 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: gissilabs
+  namespace: kube-system
+spec:
+  interval: 1h0m0s
+  url: "https://gissilabs.github.io/charts/"
+
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: bitwarden
+  namespace: default
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: vaultwarden
+      sourceRef:
+        kind: HelmRepository
+        name: gissilabs
+        namespace: flux-system
+      version: 1.2.1
+  values:
+    image:
+      repository: vaultwarden/server
+      tag: 1.30.5
+    persistence:
+      enabled: true
+      size: 2Gi
+      accessMode: ReadWriteOnce
+    ingress:
+      enabled: true
+      hosts:
+        - host: p.cybervoid.store
+          paths:
+            - path: /
+      tls:
+        - hosts:
+            - p.cybervoid.store
+          secretName: vaultwarden-tls
+    vaultwarden:
+      admin:
+        enabled: true
+        token: your-admin-token-here
